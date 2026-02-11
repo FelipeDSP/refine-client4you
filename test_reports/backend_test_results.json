@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-02-06T19:03:19.124554",
+  "total_tests": 12,
+  "passed_tests": 11,
+  "failed_tests": 1,
+  "success_rate": 91.7,
+  "passed_test_names": [
+    "Health Check",
+    "Webhook Test",
+    "Unauthorized Access - GET /api/campaigns",
+    "Unauthorized Access - GET /api/dashboard/stats",
+    "Unauthorized Access - GET /api/quotas/me",
+    "Unauthorized Access - GET /api/whatsapp/status",
+    "Disparador Access Control - POST /api/campaigns",
+    "Disparador Access Control - POST /api/campaigns/test-id/start",
+    "Security Headers",
+    "API Root",
+    "API Root Structure"
+  ],
+  "failed_test_details": [
+    {
+      "test": "POST /api/campaigns/from-leads endpoint exists",
+      "details": "Status: 405 (expected 401) - {'detail': 'Method Not Allowed'}"
+    }
+  ],
+  "backend_url": "https://api.client4you.com.br"
+}
