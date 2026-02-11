@@ -82,7 +82,7 @@ export function NotificationDropdown() {
               variant="ghost" 
               size="sm" 
               className="h-6 text-xs"
-              onClick={markAllAsRead}
+              onClick={() => markAllAsRead()}
             >
               <CheckCheck className="h-3 w-3 mr-1" />
               Marcar todas como lidas

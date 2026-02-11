@@ -127,8 +127,8 @@ export function useAdmin() {
       // Fetch user quotas (handle case where subscription_status column might not exist)
       let quotas: any[] = [];
       try {
-        const { data: quotasData, error: quotasError } = await supabase
-          .from("user_quotas")
+        const { data: quotasData, error: quotasError } = await (supabase
+          .from("user_quotas" as any) as any)
           .select("user_id, plan_type, plan_name, plan_expires_at");
 
         if (quotasError) {

@@ -54,7 +54,8 @@ const PRESET_SCHEDULES = [
 ];
 
 export function CreateCampaignDialog({ open, onOpenChange, onSuccess }: CreateCampaignDialogProps) {
-  const { createCampaign, uploadContacts, isCreating } = useCampaigns();
+  const { createCampaign, uploadContacts } = useCampaigns();
+  const isCreating = false;
   const { settings } = useCompanySettings();
   
   // Estado do Formulário

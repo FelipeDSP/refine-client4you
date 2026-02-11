@@ -334,11 +334,7 @@ export default function SearchLeads() {
 
       <QuotaLimitModal 
         open={showQuotaModal} 
-        onClose={() => setShowQuotaModal(false)}
-        limitType="leads"
-        currentPlan={quota?.plan_type || 'demo'}
-        used={quota?.leads_used || 0}
-        limit={quota?.leads_limit || 0}
+        onOpenChange={setShowQuotaModal}
       />
     </div>
   );
