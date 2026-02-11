@@ -140,8 +140,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSessionToken(newToken);
         
         // Atualizar token no banco (invalida outras sessões)
-        const { error: updateError } = await supabase
-          .from("profiles")
+        const { error: updateError } = await (supabase
+          .from("profiles") as any)
           .update({ 
             session_token: newToken,
             last_login_at: new Date().toISOString()

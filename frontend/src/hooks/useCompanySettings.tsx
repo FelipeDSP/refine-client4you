@@ -95,7 +95,7 @@ export function useCompanySettings() {
           wahaApiUrl: settingsData.waha_api_url,
           wahaApiKey: settingsData.waha_api_key,
           wahaSession: settingsData.waha_session,
-          timezone: companyData?.timezone || 'America/Sao_Paulo',
+          timezone: (companyData as any)?.timezone || 'America/Sao_Paulo',
           createdAt: settingsData.created_at,
           updatedAt: settingsData.updated_at,
         };
@@ -107,7 +107,7 @@ export function useCompanySettings() {
           wahaApiUrl: null,
           wahaApiKey: null,
           wahaSession: null,
-          timezone: companyData.timezone || 'America/Sao_Paulo',
+          timezone: (companyData as any).timezone || 'America/Sao_Paulo',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -190,8 +190,8 @@ export function useCompanySettings() {
 
       // 2. Atualiza Timezone na tabela companies (se foi enviado)
       if (newSettings.timezone && newSettings.timezone !== settings?.timezone) {
-        const { error: companyError } = await supabase
-          .from("companies")
+        const { error: companyError } = await (supabase
+          .from("companies") as any)
           .update({ timezone: newSettings.timezone })
           .eq("id", user.companyId);
           

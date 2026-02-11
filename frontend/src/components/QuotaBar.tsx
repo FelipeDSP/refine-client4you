@@ -94,7 +94,7 @@ export function QuotaBar() {
   };
 
   // Lógica: Mostrar botão se for Demo, ou se estiver perto do limite, ou se o plano expirou
-  const shouldShowUpgrade = quota.plan_type === 'demo' || isPlanExpired; 
+  const shouldShowUpgrade = (quota.plan_type as string) === 'demo' || isPlanExpired; 
   const isNearLimit = !hasUnlimitedLeads && leadsPercentage >= 80;
 
   return (
