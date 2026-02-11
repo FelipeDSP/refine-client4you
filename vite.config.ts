@@ -7,13 +7,6 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    proxy: {
-      "/api": {
-        target: "http://127.0.0.1:8001",
-        changeOrigin: true,
-        secure: false,
-      },
-    },
   },
   plugins: [
     react(),
@@ -23,8 +16,5 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },
-  build: {
-    outDir: path.resolve(__dirname, "./dist"),
   },
 }));
