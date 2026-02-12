@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { usePageTitle } from "@/contexts/PageTitleContext";
+import { apiGet, apiPut } from "@/lib/api";
 import { usePlanPermissions } from "@/hooks/usePlanPermissions";
 import { PlanBlockedOverlay } from "@/components/PlanBlockedOverlay";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -107,43 +108,97 @@ export default function AgenteIA() {
   
   const [config, setConfig] = useState<AgentConfig>(DEFAULT_CONFIG);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingConfig, setIsLoadingConfig] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
+
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
 
   useEffect(() => {
     setPageTitle("Agente IA", Bot);
   }, [setPageTitle]);
 
-  // Carregar configurações salvas (localStorage por enquanto)
-  useEffect(() => {
-    const saved = localStorage.getItem('agentConfig');
-    if (saved) {
-      try {
-        setConfig(JSON.parse(saved));
-      } catch (e) {
-        console.error('Error loading agent config:', e);
+  // Carregar configurações do backend
+  const loadConfig = useCallback(async () => {
+    try {
+      setIsLoadingConfig(true);
+      const response = await apiGet(`${BACKEND_URL}/api/agent/config`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.config) {
+          // Mapear campos do banco para o frontend
+          setConfig({
+            enabled: data.config.enabled ?? false,
+            name: data.config.name ?? DEFAULT_CONFIG.name,
+            personality: data.config.personality ?? DEFAULT_CONFIG.personality,
+            systemPrompt: data.config.system_prompt ?? DEFAULT_CONFIG.systemPrompt,
+            welcomeMessage: data.config.welcome_message ?? DEFAULT_CONFIG.welcomeMessage,
+            responseDelay: data.config.response_delay ?? DEFAULT_CONFIG.responseDelay,
+            maxResponseLength: data.config.max_response_length ?? DEFAULT_CONFIG.maxResponseLength,
+            tone: data.config.tone ?? DEFAULT_CONFIG.tone,
+            language: data.config.language ?? DEFAULT_CONFIG.language,
+            autoQualify: data.config.auto_qualify ?? DEFAULT_CONFIG.autoQualify,
+            qualificationQuestions: data.config.qualification_questions ?? DEFAULT_CONFIG.qualificationQuestions,
+            blockedTopics: data.config.blocked_topics ?? DEFAULT_CONFIG.blockedTopics,
+            workingHours: data.config.working_hours ?? DEFAULT_CONFIG.workingHours,
+          });
+        }
       }
+    } catch (error) {
+      console.error('Error loading agent config:', error);
+      // Fallback: tentar localStorage
+      const saved = localStorage.getItem('agentConfig');
+      if (saved) {
+        try { setConfig(JSON.parse(saved)); } catch (e) {}
+      }
+    } finally {
+      setIsLoadingConfig(false);
     }
-  }, []);
+  }, [BACKEND_URL]);
+
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Salvar no localStorage por enquanto
-      localStorage.setItem('agentConfig', JSON.stringify(config));
+      // Mapear campos do frontend para o backend
+      const payload = {
+        enabled: config.enabled,
+        name: config.name,
+        personality: config.personality,
+        system_prompt: config.systemPrompt,
+        welcome_message: config.welcomeMessage,
+        response_delay: config.responseDelay,
+        max_response_length: config.maxResponseLength,
+        tone: config.tone,
+        language: config.language,
+        auto_qualify: config.autoQualify,
+        qualification_questions: config.qualificationQuestions,
+        blocked_topics: config.blockedTopics,
+        working_hours: config.workingHours,
+      };
+
+      const response = await apiPut(`${BACKEND_URL}/api/agent/config`, payload);
       
-      // TODO: Integrar com backend/n8n
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Erro ao salvar');
+      }
+
+      // Backup em localStorage
+      localStorage.setItem('agentConfig', JSON.stringify(config));
       
       toast({
         title: "Configurações salvas!",
-        description: "As configurações do agente foram atualizadas.",
+        description: "As configurações do agente foram atualizadas no servidor.",
       });
       setHasChanges(false);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro ao salvar",
-        description: "Não foi possível salvar as configurações.",
+        description: error.message || "Não foi possível salvar as configurações.",
       });
     } finally {
       setIsSaving(false);
@@ -156,7 +211,7 @@ export default function AgenteIA() {
   };
 
   // Loading
-  if (isLoadingPermissions) {
+  if (isLoadingPermissions || isLoadingConfig) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
@@ -262,15 +317,15 @@ export default function AgenteIA() {
         </CardContent>
       </Card>
 
-      {/* Aviso de Integração */}
-      <Card className="border-amber-200 bg-amber-50/50">
+      {/* Info de Integração */}
+      <Card className="border-blue-200 bg-blue-50/50">
         <CardContent className="flex items-start gap-4 p-4">
-          <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+          <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-amber-800">Integração Pendente</p>
-            <p className="text-sm text-amber-700 mt-1">
-              O Agente IA está em fase Beta. A integração com n8n será configurada em breve. 
-              Por enquanto, configure os parâmetros do seu agente.
+            <p className="text-sm font-medium text-blue-800">Integração Ativa</p>
+            <p className="text-sm text-blue-700 mt-1">
+              O Agente IA está integrado com n8n. Configure os parâmetros abaixo 
+              e ative o agente para começar a responder automaticamente via WhatsApp.
             </p>
           </div>
         </CardContent>
