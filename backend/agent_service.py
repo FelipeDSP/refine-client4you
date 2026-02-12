@@ -151,6 +151,10 @@ async def process_waha_message_for_n8n(payload: dict):
             "media_url": msg_payload.get("media", {}).get("url") if msg_payload.get("hasMedia") else None,
         }
 
+        # Log do payload para debug (sem expor a API key completa)
+        openai_key = agent_config.get("openai_api_key", "")
+        logger.info(f"📤 Payload OpenAI: model={agent_config.get('model')}, temp={agent_config.get('temperature')}, has_key={'Sim' if openai_key else 'Não'}")
+
         # Disparo assíncrono (Fire & Forget)
         async with httpx.AsyncClient() as client:
             try:
