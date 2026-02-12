@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Star, Search, Send, Bot, ArrowRight, Zap, Users, TrendingUp, Shield, ChevronDown, BarChart3, Clock, Globe } from "lucide-react";
+import { Check, Star, Search, Send, Bot, ArrowRight, ChevronDown, BarChart3 } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 import { plans } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
@@ -59,13 +59,8 @@ function AnimatedSection({ children, className = "" }: { children: React.ReactNo
   );
 }
 
-// Stats counter component
-const stats = [
-  { value: "10K+", label: "Leads Gerados", icon: Users },
-  { value: "500+", label: "Empresas Ativas", icon: TrendingUp },
-  { value: "95%", label: "Taxa de Entrega", icon: Zap },
-  { value: "24/7", label: "Suporte Ativo", icon: Clock },
-];
+
+
 
 export default function LandingPage() {
   const { user, isLoading } = useAuth();
@@ -173,7 +168,7 @@ export default function LandingPage() {
                 </Button>
               </a>
               <a href="#how-it-works">
-                <Button size="lg" variant="outline" className="text-lg h-14 px-10 border-white/20 text-white hover:bg-white/10 hover:text-white">
+                <Button size="lg" variant="outline" className="text-lg h-14 px-10 border-white/30 text-white bg-white/5 hover:bg-white/15 hover:text-white">
                   Como Funciona
                 </Button>
               </a>
@@ -197,20 +192,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Social Proof / Stats Bar */}
-      <section className="py-16 border-b bg-muted/30">
-        <div className="container">
-          <AnimatedSection className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, i) => (
-              <motion.div key={stat.label} variants={fadeUp} custom={i} className="text-center space-y-2">
-                <stat.icon className="h-8 w-8 text-primary mx-auto mb-3" />
-                <div className="text-3xl md:text-4xl font-extrabold text-foreground">{stat.value}</div>
-                <div className="text-sm text-muted-foreground font-medium">{stat.label}</div>
-              </motion.div>
-            ))}
-          </AnimatedSection>
-        </div>
-      </section>
 
       {/* Features Section */}
       <section id="features" className="py-24">
