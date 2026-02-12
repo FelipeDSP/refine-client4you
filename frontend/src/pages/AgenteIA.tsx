@@ -310,6 +310,26 @@ export default function AgenteIA() {
         </div>
       </div>
 
+      {/* Alerta de API Key não configurada */}
+      {!isLoadingConfig && !hasOpenaiKey && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <AlertCircle className="h-5 w-5 text-orange-600" />
+          <AlertTitle className="text-orange-800">Configuração necessária</AlertTitle>
+          <AlertDescription className="text-orange-700">
+            <p className="mb-3">
+              Para o Agente IA funcionar, você precisa configurar sua chave da API OpenAI.
+            </p>
+            <Link to="/configuracoes?tab=integrations">
+              <Button variant="outline" size="sm" className="gap-2 border-orange-300 hover:bg-orange-100">
+                <Settings className="h-4 w-4" />
+                Ir para Configurações
+                <ExternalLink className="h-3 w-3" />
+              </Button>
+            </Link>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Status Card */}
       <Card className={`border-2 ${config.enabled ? 'border-green-200 bg-green-50/50' : 'border-slate-200'}`}>
         <CardContent className="flex items-center justify-between p-6">
