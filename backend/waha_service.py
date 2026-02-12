@@ -36,11 +36,40 @@ class WahaService:
     
     # --- MÉTODOS DE SESSÃO ---
 
-    async def start_session(self) -> Dict[str, Any]:
-        """Inicia (ou cria) a sessão no WAHA"""
+    async def start_session(self, webhook_url: str = None) -> Dict[str, Any]:
+        """
+        Inicia (ou cria) a sessão no WAHA com webhook configurado automaticamente.
+        
+        Args:
+            webhook_url: URL do webhook do backend. Se não fornecido, usa variável de ambiente.
+        """
         try:
             logger.info(f"🔌 WahaService.start_session - session_name: {self.session_name}")
-            payload = {"name": self.session_name, "config": {"webhooks": []}}
+            
+            # Configurar webhook automaticamente
+            import os
+            backend_webhook_url = webhook_url or os.getenv('BACKEND_WEBHOOK_URL') or os.getenv('CORS_ORIGINS', '').split(',')[0].strip()
+            
+            webhooks_config = []
+            if backend_webhook_url:
+                # Construir URL do webhook
+                if not backend_webhook_url.endswith('/api/webhook/waha'):
+                    webhook_full_url = f"{backend_webhook_url.rstrip('/')}/api/webhook/waha"
+                else:
+                    webhook_full_url = backend_webhook_url
+                
+                webhooks_config = [
+                    {
+                        "url": webhook_full_url,
+                        "events": ["message", "message.ack", "session.status"],
+                        "retries": {"delaySeconds": 2, "attempts": 3}
+                    }
+                ]
+                logger.info(f"🔌 Webhook configurado: {webhook_full_url}")
+            else:
+                logger.warning("⚠️ BACKEND_WEBHOOK_URL não configurado - webhook não será registrado")
+            
+            payload = {"name": self.session_name, "config": {"webhooks": webhooks_config}}
             logger.info(f"🔌 Payload para criar sessão: {payload}")
             
             async with httpx.AsyncClient(timeout=30.0) as client:
