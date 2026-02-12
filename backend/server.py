@@ -360,6 +360,42 @@ async def get_whatsapp_qr(
     return await waha.get_qr_code()
 
 
+@api_router.post("/whatsapp/webhook/configure")
+async def configure_whatsapp_webhook(
+    request: Request,
+    auth_user: dict = Depends(get_authenticated_user)
+):
+    """
+    Configura o webhook do WAHA para a sessão da empresa.
+    Chamado automaticamente quando o usuário conecta o WhatsApp.
+    """
+    company_id = auth_user.get("company_id")
+    if not company_id:
+        raise HTTPException(status_code=400, detail="Company ID não encontrado")
+    
+    waha_url = os.getenv('WAHA_DEFAULT_URL')
+    waha_key = os.getenv('WAHA_MASTER_KEY')
+    
+    # URL do backend para receber webhooks
+    backend_url = os.getenv('BACKEND_WEBHOOK_URL') or os.getenv('CORS_ORIGINS', '').split(',')[0].strip()
+    
+    if not backend_url:
+        raise HTTPException(status_code=500, detail="BACKEND_WEBHOOK_URL não configurado no servidor")
+    
+    session_name = await get_session_name_for_company(company_id)
+    waha = WahaService(waha_url, waha_key, session_name)
+    
+    result = await waha.update_webhook(backend_url)
+    
+    if result.get("success"):
+        logger.info(f"✅ Webhook configurado para empresa {company_id}: {result.get('webhook_url')}")
+        return {"success": True, "webhook_url": result.get("webhook_url"), "session_name": session_name}
+    else:
+        raise HTTPException(status_code=500, detail=result.get("error", "Erro ao configurar webhook"))
+
+
+
+
 # ========== NEW: Lead Validation Endpoint ==========
 
 class ValidateLeadsRequest(BaseModel):
