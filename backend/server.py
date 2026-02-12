@@ -1228,6 +1228,9 @@ class AgentConfigRequest(BaseModel):
     max_response_length: int = 500
     tone: str = "professional"
     language: str = "pt-BR"
+    model: str = "gpt-4.1-mini"
+    temperature: float = 0.7
+    openai_api_key: Optional[str] = ""
     auto_qualify: bool = True
     qualification_questions: list = []
     blocked_topics: list = []
