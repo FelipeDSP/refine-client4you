@@ -317,36 +317,43 @@ async def kiwify_webhook(
             # ENVIAR EMAIL
             try:
                 plan_config = PLAN_LIMITS.get(plan_key, {})
-                features = []
-                
-                # SE FOR NOVO USUÁRIO, COLOCAR AS CREDENCIAIS NO TOPO
-                if is_new_user and new_password:
-                    features.append("🔐 === SUAS CREDENCIAIS DE ACESSO ===")
-                    features.append(f"📧 Login: {payload.customer_email}")
-                    features.append(f"🔑 Senha Temporária: {new_password}")
-                    features.append("==================================")
-                    features.append("⚠️ Recomendamos trocar sua senha ao entrar.")
-                    features.append("") # Linha em branco
-                
-                features.append(f"✓ Plano: {plan_config.get('name', plan_key)}")
-                
-                if plan_config.get('leads_limit') == -1:
-                    features.append("✓ Buscas de leads ilimitadas")
-                
-                if plan_config.get('campaigns_limit', 0) == -1:
-                    features.append("✓ Disparador WhatsApp ilimitado")
-                
                 email_service = get_email_service()
                 
-                # Usa o método existente de confirmação, mas agora com credenciais se necessário
-                await email_service.send_purchase_confirmation(
-                    user_email=payload.customer_email,
-                    user_name=payload.customer_name,
-                    plan_name=plan_config.get('name', plan_key),
-                    plan_features=features,
-                    order_id=payload.order_id
-                )
-                logger.info(f"📧 Email enviado para {payload.customer_email}")
+                # Montar lista de features do plano
+                features = []
+                if plan_config.get('leads_limit') == -1:
+                    features.append("Buscas de leads ilimitadas")
+                if plan_config.get('campaigns_limit', 0) == -1:
+                    features.append("Disparador WhatsApp ilimitado")
+                if plan_key == 'avancado':
+                    features.append("Agente IA para atendimento automático")
+                    features.append("Múltiplas instâncias WhatsApp")
+                
+                # URL de login (usar variável de ambiente ou padrão)
+                login_url = os.environ.get('FRONTEND_URL', 'https://app.client4you.com.br') + '/login'
+                
+                if is_new_user and new_password:
+                    # NOVO USUÁRIO: Email especial com credenciais em destaque
+                    await email_service.send_welcome_with_credentials(
+                        user_email=payload.customer_email,
+                        user_name=payload.customer_name,
+                        temp_password=new_password,
+                        plan_name=plan_config.get('name', plan_key),
+                        plan_features=features,
+                        order_id=payload.order_id,
+                        login_url=login_url
+                    )
+                    logger.info(f"📧 Email de boas-vindas COM CREDENCIAIS enviado para {payload.customer_email}")
+                else:
+                    # USUÁRIO EXISTENTE: Email normal de upgrade
+                    await email_service.send_purchase_confirmation(
+                        user_email=payload.customer_email,
+                        user_name=payload.customer_name,
+                        plan_name=plan_config.get('name', plan_key),
+                        plan_features=features,
+                        order_id=payload.order_id
+                    )
+                    logger.info(f"📧 Email de upgrade enviado para {payload.customer_email}")
                 
             except Exception as e:
                 logger.error(f"❌ Erro ao enviar email: {e}")
