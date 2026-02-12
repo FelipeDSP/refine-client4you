@@ -522,97 +522,25 @@ export default function AgenteIA() {
 
         {/* Tab: Comportamento */}
         <TabsContent value="behavior" className="space-y-6">
-          {/* Configurações de IA / OpenAI */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5 text-green-600" />
-                Configurações de IA (OpenAI)
-              </CardTitle>
-              <CardDescription>
-                Configure suas credenciais e parâmetros do modelo de IA
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="openai-key" className="flex items-center gap-2">
-                    API Key da OpenAI
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Info className="h-4 w-4 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <p>Sua chave de API da OpenAI. Obtenha em platform.openai.com</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </Label>
-                  <Input
-                    id="openai-key"
-                    type="password"
-                    placeholder="sk-..."
-                    value={config.openaiApiKey}
-                    onChange={(e) => updateConfig('openaiApiKey', e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Sua chave é armazenada de forma segura e usada apenas para processar mensagens do seu agente.
-                  </p>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Modelo</Label>
-                    <Select
-                      value={config.model}
-                      onValueChange={(value) => updateConfig('model', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o modelo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="gpt-4.1-mini">GPT-4.1 Mini (Recomendado)</SelectItem>
-                        <SelectItem value="gpt-4.1">GPT-4.1</SelectItem>
-                        <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                        <SelectItem value="gpt-4">GPT-4</SelectItem>
-                        <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo (Mais barato)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Temperatura: {config.temperature}</Label>
-                    </div>
-                    <Slider
-                      value={[config.temperature]}
-                      onValueChange={([value]) => updateConfig('temperature', value)}
-                      min={0}
-                      max={1}
-                      step={0.1}
-                      className="w-full"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      0 = Mais preciso | 1 = Mais criativo
-                    </p>
+          {/* Aviso de configuração OpenAI */}
+          {!hasOpenaiKey && (
+            <Card className="border-orange-200 bg-orange-50">
+              <CardContent className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <Brain className="h-5 w-5 text-orange-600" />
+                  <div>
+                    <p className="font-medium text-orange-800">Configure sua API Key da OpenAI</p>
+                    <p className="text-sm text-orange-700">Necessário para o agente funcionar</p>
                   </div>
                 </div>
-
-                {!config.openaiApiKey && (
-                  <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-yellow-800">API Key não configurada</p>
-                      <p className="text-xs text-yellow-700">
-                        O agente IA não funcionará sem uma chave válida da OpenAI.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                <Link to="/configuracoes?tab=integrations">
+                  <Button variant="outline" size="sm" className="border-orange-300 hover:bg-orange-100">
+                    Configurar
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
