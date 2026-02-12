@@ -689,6 +689,114 @@ export default function Settings() {
             </CardContent>
           </Card>
 
+          {/* OpenAI API Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${hasOpenaiKey ? 'bg-green-100' : 'bg-orange-100'}`}>
+                    <Brain className={`h-5 w-5 ${hasOpenaiKey ? 'text-green-600' : 'text-orange-600'}`} />
+                  </div>
+                  <div>
+                    <CardTitle>OpenAI (Agente IA)</CardTitle>
+                    <CardDescription>Configure sua chave para o Agente IA responder automaticamente</CardDescription>
+                  </div>
+                </div>
+                <Badge className={hasOpenaiKey ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}>
+                  {hasOpenaiKey ? 'Configurado' : 'Pendente'}
+                </Badge>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="openai-key">
+                  Chave da API OpenAI
+                </Label>
+                <Input
+                  id="openai-key"
+                  type="password"
+                  placeholder="sk-..."
+                  value={openaiApiKey}
+                  onChange={(e) => setOpenaiApiKey(e.target.value)}
+                  disabled={isSavingOpenai}
+                  className="font-mono"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Obtenha sua chave em:{" "}
+                  <a 
+                    href="https://platform.openai.com/api-keys" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    platform.openai.com/api-keys
+                  </a>
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Modelo</Label>
+                  <Select
+                    value={openaiModel}
+                    onValueChange={setOpenaiModel}
+                    disabled={isSavingOpenai}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o modelo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gpt-4.1-mini">GPT-4.1 Mini (Recomendado)</SelectItem>
+                      <SelectItem value="gpt-4.1">GPT-4.1</SelectItem>
+                      <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                      <SelectItem value="gpt-4">GPT-4</SelectItem>
+                      <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo (Mais barato)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Temperatura: {openaiTemperature}</Label>
+                  <Slider
+                    value={[openaiTemperature]}
+                    onValueChange={([value]) => setOpenaiTemperature(value)}
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    disabled={isSavingOpenai}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    0 = Mais preciso | 1 = Mais criativo
+                  </p>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleSaveOpenaiConfig} 
+                disabled={isSavingOpenai}
+              >
+                {isSavingOpenai ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  'Salvar Configurações'
+                )}
+              </Button>
+
+              <Alert>
+                <Key className="h-4 w-4" />
+                <AlertTitle>Para que serve?</AlertTitle>
+                <AlertDescription>
+                  A chave da OpenAI permite que o Agente IA responda mensagens automaticamente via WhatsApp.
+                  Cada empresa precisa de sua própria chave para usar o recurso.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+
           {/* Futuras Integrações */}
           <Card className="border-dashed">
             <CardHeader>
