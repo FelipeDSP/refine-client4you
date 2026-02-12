@@ -312,7 +312,7 @@ export default function Settings() {
       </div>
 
       {/* Tabs de Configuração */}
-      <Tabs defaultValue="whatsapp" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
           <TabsTrigger value="whatsapp" className="gap-2">
             <MessageCircle className="h-4 w-4" />
