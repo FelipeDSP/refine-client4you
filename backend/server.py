@@ -38,6 +38,7 @@ from security_utils import (
 from kiwify_webhook import webhook_router
 from admin_endpoints import admin_router
 from security_endpoints import security_router
+from agent_service import process_waha_message_for_n8n
 
 # --- CORREÇÃO DO LOAD DOTENV ---
 CURRENT_DIR = Path(__file__).parent
@@ -1141,6 +1142,112 @@ async def increment_quota_endpoint(
         raise
     except Exception as e:
         raise handle_error(e, "Erro ao incrementar quota")
+
+
+# ========== WAHA Webhook (recebe mensagens do WhatsApp) ==========
+@api_router.post("/webhook/waha")
+async def waha_webhook(request: Request, background_tasks: BackgroundTasks):
+    """
+    Recebe webhooks do WAHA (mensagens do WhatsApp).
+    Fluxo: WAHA → Backend → n8n → OpenAI → WAHA (resposta)
+    """
+    try:
+        payload = await request.json()
+        event = payload.get("event")
+        
+        # Só processa mensagens recebidas
+        if event == "message":
+            background_tasks.add_task(process_waha_message_for_n8n, payload)
+            return {"status": "processing"}
+        
+        return {"status": "ignored", "event": event}
+    except Exception as e:
+        logger.error(f"❌ Erro no webhook WAHA: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+# ========== Agent Config Endpoints ==========
+class AgentConfigRequest(BaseModel):
+    enabled: bool = False
+    name: str = "Assistente Virtual"
+    personality: Optional[str] = ""
+    system_prompt: Optional[str] = ""
+    welcome_message: Optional[str] = ""
+    response_delay: int = 3
+    max_response_length: int = 500
+    tone: str = "professional"
+    language: str = "pt-BR"
+    auto_qualify: bool = True
+    qualification_questions: list = []
+    blocked_topics: list = []
+    working_hours: dict = {
+        "enabled": False,
+        "start": "09:00",
+        "end": "18:00",
+        "timezone": "America/Sao_Paulo"
+    }
+
+
+@api_router.get("/agent/config")
+async def get_agent_config(auth_user: dict = Depends(get_authenticated_user)):
+    """Busca configuração do agente IA da empresa"""
+    try:
+        db = get_db()
+        company_id = auth_user["company_id"]
+        
+        config = await db.get_agent_config(company_id)
+        if not config:
+            return {"config": None}
+        
+        return {"config": config}
+    except Exception as e:
+        raise handle_error(e, "Erro ao buscar configuração do agente")
+
+
+@api_router.put("/agent/config")
+async def update_agent_config(
+    data: AgentConfigRequest,
+    auth_user: dict = Depends(get_authenticated_user)
+):
+    """Salva/atualiza configuração do agente IA da empresa"""
+    try:
+        db = get_db()
+        company_id = auth_user["company_id"]
+        
+        # Verificar permissão do plano
+        await validate_quota_for_action(
+            user_id=auth_user["user_id"],
+            action="use_agent",
+            required_plan=["avancado"],
+            db=db
+        )
+        
+        config_data = {
+            "enabled": data.enabled,
+            "name": data.name,
+            "personality": data.personality,
+            "system_prompt": data.system_prompt,
+            "welcome_message": data.welcome_message,
+            "response_delay": data.response_delay,
+            "max_response_length": data.max_response_length,
+            "tone": data.tone,
+            "language": data.language,
+            "auto_qualify": data.auto_qualify,
+            "qualification_questions": data.qualification_questions,
+            "blocked_topics": data.blocked_topics,
+            "working_hours": data.working_hours,
+        }
+        
+        result = await db.upsert_agent_config(company_id, config_data)
+        if not result:
+            raise HTTPException(status_code=500, detail="Erro ao salvar configuração")
+        
+        logger.info(f"🤖 Config do agente atualizada para empresa {company_id}")
+        return {"config": result, "success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise handle_error(e, "Erro ao salvar configuração do agente")
 
 
 # Include the router in the main app

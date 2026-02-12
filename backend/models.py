@@ -151,12 +151,14 @@ class AgentConfigBase(BaseModel):
     response_delay: int = 3
     max_response_length: int = 500
     tone: str = "professional"
+    language: str = "pt-BR"
     auto_qualify: bool = True
+    qualification_questions: List[str] = []
     blocked_topics: List[str] = []
-    working_hours: AgentWorkingHours
+    working_hours: AgentWorkingHours = AgentWorkingHours()
 
 class AgentConfigUpdate(AgentConfigBase):
-    pass # Pode adicionar campos opcionais se necessário
+    pass
 
 class AgentConfigResponse(AgentConfigBase):
     id: str
