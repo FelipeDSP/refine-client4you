@@ -471,6 +471,241 @@ class EmailService:
         
         return await self.send_email(user_email, subject, html_body, plain_body)
 
+    async def send_welcome_with_credentials(
+        self,
+        user_email: str,
+        user_name: str,
+        temp_password: str,
+        plan_name: str,
+        plan_features: List[str],
+        order_id: str,
+        login_url: str = "https://app.client4you.com.br/login"
+    ) -> bool:
+        """
+        Envia email de boas-vindas para NOVOS usuários com credenciais de acesso.
+        """
+        subject = f"🔐 Suas Credenciais de Acesso - {plan_name}"
+        
+        html_template = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    line-height: 1.6; 
+                    color: #333;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                }
+                .container { 
+                    max-width: 600px; 
+                    margin: 20px auto; 
+                    background: #ffffff;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }
+                .header { 
+                    background: linear-gradient(135deg, #FF8C00 0%, #FFC300 100%);
+                    color: white; 
+                    padding: 30px 20px; 
+                    text-align: center;
+                }
+                .header h1 {
+                    margin: 0;
+                    font-size: 28px;
+                }
+                .content { 
+                    padding: 30px 20px;
+                }
+                .credentials-box {
+                    background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+                    color: white;
+                    padding: 25px;
+                    margin: 25px 0;
+                    border-radius: 10px;
+                    text-align: center;
+                }
+                .credentials-box h2 {
+                    margin-top: 0;
+                    font-size: 20px;
+                    border-bottom: 1px solid rgba(255,255,255,0.3);
+                    padding-bottom: 15px;
+                }
+                .credential-item {
+                    background: rgba(255,255,255,0.1);
+                    padding: 12px 20px;
+                    margin: 10px 0;
+                    border-radius: 5px;
+                    font-family: monospace;
+                    font-size: 16px;
+                }
+                .credential-label {
+                    font-size: 12px;
+                    opacity: 0.8;
+                    margin-bottom: 5px;
+                }
+                .warning-box {
+                    background: #fff3cd;
+                    border: 1px solid #ffc107;
+                    color: #856404;
+                    padding: 15px;
+                    border-radius: 5px;
+                    margin: 20px 0;
+                    font-size: 14px;
+                }
+                .plan-box {
+                    background: #f8f9fa;
+                    border-left: 4px solid #FF8C00;
+                    padding: 20px;
+                    margin: 20px 0;
+                    border-radius: 5px;
+                }
+                .plan-box h3 {
+                    margin-top: 0;
+                    color: #FF8C00;
+                }
+                .features {
+                    list-style: none;
+                    padding: 0;
+                }
+                .features li {
+                    padding: 8px 0;
+                    padding-left: 25px;
+                    position: relative;
+                }
+                .features li:before {
+                    content: "✓";
+                    position: absolute;
+                    left: 0;
+                    color: #28a745;
+                    font-weight: bold;
+                }
+                .button {
+                    display: inline-block;
+                    padding: 15px 40px;
+                    background: linear-gradient(135deg, #FF8C00 0%, #FFC300 100%);
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin: 20px 0;
+                    font-weight: bold;
+                    font-size: 18px;
+                }
+                .footer {
+                    background: #f8f9fa;
+                    padding: 20px;
+                    text-align: center;
+                    color: #666;
+                    font-size: 12px;
+                }
+                .order-id {
+                    background: #e9ecef;
+                    padding: 10px;
+                    border-radius: 5px;
+                    font-family: monospace;
+                    margin: 10px 0;
+                    font-size: 12px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🎉 Bem-vindo ao Client4You!</h1>
+                </div>
+                
+                <div class="content">
+                    <p>Olá <strong>{{ user_name }}</strong>,</p>
+                    
+                    <p>Sua compra foi aprovada! Sua conta foi criada automaticamente e você já pode começar a usar a plataforma.</p>
+                    
+                    <div class="credentials-box">
+                        <h2>🔐 Suas Credenciais de Acesso</h2>
+                        
+                        <div class="credential-label">EMAIL / LOGIN</div>
+                        <div class="credential-item">{{ user_email }}</div>
+                        
+                        <div class="credential-label">SENHA TEMPORÁRIA</div>
+                        <div class="credential-item">{{ temp_password }}</div>
+                    </div>
+                    
+                    <div class="warning-box">
+                        ⚠️ <strong>Importante:</strong> Por segurança, recomendamos que você altere sua senha após o primeiro acesso.
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <a href="{{ login_url }}" class="button">
+                            Acessar Minha Conta
+                        </a>
+                    </div>
+                    
+                    <div class="plan-box">
+                        <h3>{{ plan_name }}</h3>
+                        <p><strong>O que você pode fazer:</strong></p>
+                        <ul class="features">
+                        {% for feature in plan_features %}
+                            <li>{{ feature }}</li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    <p><strong>Número do Pedido:</strong></p>
+                    <div class="order-id">{{ order_id }}</div>
+                    
+                    <p style="margin-top: 30px;">Se tiver qualquer dúvida, estamos aqui para ajudar!</p>
+                    
+                    <p>Atenciosamente,<br>
+                    <strong>Equipe Client4You</strong></p>
+                </div>
+                
+                <div class="footer">
+                    <p>Este é um email automático, por favor não responda.</p>
+                    <p>© 2025 Client4You - Todos os direitos reservados</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        template = Template(html_template)
+        html_body = template.render(
+            user_name=user_name,
+            user_email=user_email,
+            temp_password=temp_password,
+            plan_name=plan_name,
+            plan_features=plan_features,
+            order_id=order_id,
+            login_url=login_url
+        )
+        
+        plain_body = f"""
+        Olá {user_name},
+        
+        Sua compra foi aprovada! Sua conta foi criada automaticamente.
+        
+        === SUAS CREDENCIAIS ===
+        Email: {user_email}
+        Senha Temporária: {temp_password}
+        ========================
+        
+        ⚠️ Recomendamos trocar sua senha após o primeiro acesso.
+        
+        Plano: {plan_name}
+        Pedido: {order_id}
+        
+        Acesse: {login_url}
+        
+        Atenciosamente,
+        Equipe Client4You
+        """
+        
+        return await self.send_email(user_email, subject, html_body, plain_body)
+
+
 
 # Instância global
 _email_service: Optional[EmailService] = None
