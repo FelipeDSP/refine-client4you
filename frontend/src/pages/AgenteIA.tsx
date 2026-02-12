@@ -132,6 +132,9 @@ export default function AgenteIA() {
       if (response.ok) {
         const data = await response.json();
         if (data.config) {
+          // Verificar se tem API key configurada
+          setHasOpenaiKey(!!data.config.openai_api_key);
+          
           // Mapear campos do banco para o frontend
           setConfig({
             enabled: data.config.enabled ?? false,
