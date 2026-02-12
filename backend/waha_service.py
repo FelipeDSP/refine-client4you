@@ -93,6 +93,51 @@ class WahaService:
             logger.error(f"Erro ao iniciar sessão: {e}")
             return {"success": False, "error": str(e)}
 
+    async def update_webhook(self, webhook_url: str) -> Dict[str, Any]:
+        """
+        Atualiza o webhook de uma sessão existente.
+        Útil para sessões que foram criadas sem webhook.
+        """
+        try:
+            logger.info(f"🔄 Atualizando webhook da sessão: {self.session_name}")
+            
+            # Construir URL completa do webhook
+            if not webhook_url.endswith('/api/webhook/waha'):
+                webhook_full_url = f"{webhook_url.rstrip('/')}/api/webhook/waha"
+            else:
+                webhook_full_url = webhook_url
+            
+            payload = {
+                "config": {
+                    "webhooks": [
+                        {
+                            "url": webhook_full_url,
+                            "events": ["message", "message.ack", "session.status"],
+                            "retries": {"delaySeconds": 2, "attempts": 3}
+                        }
+                    ]
+                }
+            }
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.put(
+                    f"{self.waha_url}/api/sessions/{self.session_name}",
+                    headers=self.headers,
+                    json=payload
+                )
+                
+                if response.status_code in [200, 201]:
+                    logger.info(f"✅ Webhook atualizado com sucesso: {webhook_full_url}")
+                    return {"success": True, "webhook_url": webhook_full_url}
+                else:
+                    logger.error(f"❌ Erro ao atualizar webhook: {response.status_code} - {response.text}")
+                    return {"success": False, "error": f"HTTP {response.status_code}"}
+                    
+        except Exception as e:
+            logger.error(f"Erro ao atualizar webhook: {e}")
+            return {"success": False, "error": str(e)}
+
+
     async def stop_session(self) -> Dict[str, Any]:
         try:
             async with httpx.AsyncClient(timeout=20.0) as client:
