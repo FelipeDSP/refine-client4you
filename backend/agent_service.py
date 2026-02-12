@@ -67,6 +67,9 @@ async def process_waha_message_for_n8n(payload: dict):
         # 4. Buscar Configuração do Agente
         agent_config = await db.get_agent_config(company_id)
         
+        # Log de debug
+        logger.info(f"🔍 Agent config para {company_id}: enabled={agent_config.get('enabled') if agent_config else 'None'}, openai_key={'Sim' if agent_config and agent_config.get('openai_api_key') else 'Não'}")
+        
         # Verifica se está habilitado
         if not agent_config or not agent_config.get("enabled"):
             return 
