@@ -303,7 +303,11 @@ async def start_whatsapp_session(
     logger.info(f"🚀 Iniciando sessão: {session_name} para empresa: {company_id}")
 
     waha = WahaService(waha_url, waha_key, session_name)
-    result = await waha.start_session()
+    
+    # Passa a URL do backend para configurar o webhook automaticamente
+    backend_webhook_url = os.getenv('BACKEND_WEBHOOK_URL') or os.getenv('CORS_ORIGINS', '').split(',')[0].strip()
+    result = await waha.start_session(webhook_url=backend_webhook_url)
+    
     if not result.get("success"):
         raise HTTPException(status_code=500, detail=result.get("error"))
 
