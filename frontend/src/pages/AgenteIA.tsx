@@ -116,6 +116,7 @@ export default function AgenteIA() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingConfig, setIsLoadingConfig] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
+  const [hasOpenaiKey, setHasOpenaiKey] = useState(false);
 
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
 
