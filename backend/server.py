@@ -311,6 +311,17 @@ async def start_whatsapp_session(
     if not result.get("success"):
         raise HTTPException(status_code=500, detail=result.get("error"))
 
+    # Salvar o nome da sessão no company_settings para o agente IA funcionar
+    try:
+        db = get_db()
+        db.client.table('company_settings').upsert({
+            'company_id': company_id,
+            'waha_session': session_name
+        }, on_conflict='company_id').execute()
+        logger.info(f"✅ Sessão {session_name} salva em company_settings")
+    except Exception as e:
+        logger.warning(f"⚠️ Não foi possível salvar sessão em company_settings: {e}")
+
     return {"status": "STARTING", "message": "Motor em inicialização...", "session_name": session_name}
 
 @api_router.post("/whatsapp/session/stop")
