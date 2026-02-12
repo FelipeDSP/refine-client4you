@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { usePageTitle } from "@/contexts/PageTitleContext";
 import { apiGet, apiPut } from "@/lib/api";
 import { usePlanPermissions } from "@/hooks/usePlanPermissions";
@@ -12,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { 
   Bot, 
   Zap, 
@@ -26,7 +28,9 @@ import {
   Target,
   Shield,
   Lightbulb,
-  AlertCircle
+  AlertCircle,
+  Settings,
+  ExternalLink
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
