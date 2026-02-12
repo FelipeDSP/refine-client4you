@@ -53,6 +53,9 @@ interface AgentConfig {
   maxResponseLength: number;
   tone: 'formal' | 'casual' | 'professional' | 'friendly';
   language: 'pt-BR' | 'en-US' | 'es-ES';
+  model: string;
+  temperature: number;
+  openaiApiKey: string;
   autoQualify: boolean;
   qualificationQuestions: string[];
   blockedTopics: string[];
@@ -86,6 +89,9 @@ Regras importantes:
   maxResponseLength: 500,
   tone: 'professional',
   language: 'pt-BR',
+  model: 'gpt-4.1-mini',
+  temperature: 0.7,
+  openaiApiKey: '',
   autoQualify: true,
   qualificationQuestions: [
     "Qual é o seu nome?",
