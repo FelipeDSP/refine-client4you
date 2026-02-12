@@ -112,6 +112,13 @@ export default function Settings() {
   const [serpapiKey, setSerpapiKey] = useState("");
   const [isSavingSerp, setIsSavingSerp] = useState(false);
   
+  // Estados da OpenAI
+  const [openaiApiKey, setOpenaiApiKey] = useState("");
+  const [openaiModel, setOpenaiModel] = useState("gpt-4.1-mini");
+  const [openaiTemperature, setOpenaiTemperature] = useState(0.7);
+  const [isSavingOpenai, setIsSavingOpenai] = useState(false);
+  const [hasOpenaiKey, setHasOpenaiKey] = useState(false);
+  
   // Estados do Painel WhatsApp
   const [waStatus, setWaStatus] = useState<WAStatus>("LOADING");
   const [qrCode, setQrCode] = useState<string>("");
