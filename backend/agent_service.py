@@ -116,6 +116,13 @@ async def process_waha_message_for_n8n(payload: dict):
                 "mensagem": body,
             },
             
+            # === Credenciais OpenAI do cliente ===
+            "openai": {
+                "api_key": agent_config.get("openai_api_key", ""),
+                "model": agent_config.get("model", "gpt-4.1-mini"),
+                "temperature": float(agent_config.get("temperature", 0.7)),
+            },
+            
             # === Contexto da empresa (Client4You) ===
             "client4you": {
                 "company_id": company_id,
@@ -127,7 +134,7 @@ async def process_waha_message_for_n8n(payload: dict):
                     "system_prompt": agent_config.get("system_prompt", ""),
                     "response_delay": agent_config.get("response_delay", 3),
                     "model": agent_config.get("model", "gpt-4.1-mini"),
-                    "temperature": agent_config.get("temperature", 0.7),
+                    "temperature": float(agent_config.get("temperature", 0.7)),
                 }
             },
             
