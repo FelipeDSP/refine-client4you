@@ -141,6 +141,58 @@ export default function Settings() {
     }
   }, [settings]);
 
+  // Carregar configurações da OpenAI do agent_configs
+  useEffect(() => {
+    const loadOpenaiConfig = async () => {
+      try {
+        const res = await api.get('/agent/config');
+        if (res.config) {
+          if (res.config.openai_api_key) {
+            setOpenaiApiKey(res.config.openai_api_key);
+            setHasOpenaiKey(true);
+          }
+          if (res.config.model) setOpenaiModel(res.config.model);
+          if (res.config.temperature) setOpenaiTemperature(res.config.temperature);
+        }
+      } catch (e) {
+        console.error('Erro ao carregar config OpenAI:', e);
+      }
+    };
+    loadOpenaiConfig();
+  }, []);
+
+  // Handler para salvar configurações OpenAI
+  const handleSaveOpenaiConfig = async () => {
+    setIsSavingOpenai(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${BACKEND_URL}/api/agent/config`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({
+          openai_api_key: openaiApiKey,
+          model: openaiModel,
+          temperature: openaiTemperature
+        })
+      });
+      
+      if (response.ok) {
+        setHasOpenaiKey(!!openaiApiKey);
+        toast({ title: "Configurações salvas!", description: "Suas configurações de IA foram atualizadas." });
+      } else {
+        const error = await response.json();
+        throw new Error(error.detail || 'Erro ao salvar');
+      }
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Erro", description: e.message || "Não foi possível salvar." });
+    } finally {
+      setIsSavingOpenai(false);
+    }
+  };
+
   // Polling de Status do WhatsApp
   useEffect(() => {
     if (!user?.companyId) return;
