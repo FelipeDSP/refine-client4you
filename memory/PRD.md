@@ -1,158 +1,85 @@
-# Client4You / Lead Dispatcher - PRD (Product Requirements Document)
+# Client4You - Product Requirements Document
 
-## 📋 Visão Geral
-Plataforma SaaS para captação e conversão de leads via WhatsApp.
+## Original Problem Statement
+Complete analysis of GitHub repository (`https://github.com/FelipeDSP/refine-client4you.git`) to identify and resolve problems, bugs, or inconsistencies for deployment on Coolify VPS.
 
-**Stack Técnico:**
-- Frontend: React + TypeScript + Vite + TailwindCSS + Shadcn/UI
-- Backend: FastAPI (Python)
-- Banco de Dados: Supabase (PostgreSQL)
-- Integração WhatsApp: WAHA (WhatsApp HTTP API)
-- Pagamentos: Kiwify (webhooks)
+User's specific requests:
+1. Fix application preview loading issues
+2. Verify and explain "IA agent + WAHA + n8n" integration
+3. Ensure automatic WAHA webhook configuration on session creation
+4. Improve new user welcome email flow
+5. Adapt backend for existing n8n workflow compatibility
 
----
+## Architecture
 
-## 👥 User Personas
+### Tech Stack
+- **Backend:** FastAPI (Python)
+- **Frontend:** React + Vite + TypeScript + TailwindCSS
+- **Database:** Supabase (PostgreSQL)
+- **Integrations:** WAHA (WhatsApp API), n8n (Workflow Automation), Kiwify (Payments), OpenAI
 
-### 1. Empreendedor/Vendedor (Usuário Final)
-- Busca leads qualificados para seu negócio
-- Precisa de ferramenta para disparar mensagens em massa
-- Quer automatizar atendimento inicial
+### Key Files
+- `backend/server.py` - Main FastAPI application
+- `backend/waha_service.py` - WAHA session management with automatic webhook config
+- `backend/agent_service.py` - n8n integration for AI agent
+- `backend/security_utils.py` - Authentication and security utilities
+- `frontend/src/integrations/supabase/client.ts` - Supabase client configuration
 
-### 2. Administrador da Plataforma
-- Gerencia usuários e planos
-- Monitora uso do sistema
-- Suspende/ativa contas manualmente
+### Data Flow: WAHA → Backend → n8n
+1. WAHA receives WhatsApp message
+2. WAHA sends webhook to `POST /api/webhook/waha`
+3. Backend processes message via `agent_service.py`
+4. Backend forwards to n8n webhook (if `N8N_WEBHOOK_URL` configured)
 
----
+## What's Been Implemented
 
-## 🎯 Core Requirements (Estáticos)
+### Session 1 (Previous Agent)
+- Fixed frontend `framer-motion` dependency
+- Automatic WAHA webhook configuration on session creation
+- Endpoint `/api/whatsapp/webhook/configure` for updating existing sessions
+- Improved new user welcome email template
+- n8n-compatible payload in `agent_service.py`
+- Documentation: `backend/docs/GUIA_N8N_ADAPTACAO.md`
+- Test script: `test_agent_flow.py`
 
-### Funcionalidades Principais
-1. **Extrator de Leads** - Busca leads do Google Maps por segmento/localização
-2. **Disparador WhatsApp** - Envio de mensagens em massa com intervalos
-3. **Agente IA** - Resposta automática inteligente (em desenvolvimento)
-4. **Gestão de Campanhas** - Criar, pausar, cancelar campanhas
-5. **Dashboard** - Métricas em tempo real
+### Session 2 (Current - 2026-02-12)
+- Configured backend `.env` with Supabase credentials
+- Backend now communicating correctly with Supabase
+- Confirmed automatic webhook configuration is working
 
-### Sistema de Planos (SEM DEMO)
-| Plano | Leads | Disparador | Agente IA | Preço |
-|-------|-------|------------|-----------|-------|
-| Básico | Ilimitado | ❌ | ❌ | R$ 39,90/mês |
-| Intermediário | Ilimitado | ✅ Ilimitado | ❌ | R$ 99,90/mês |
-| Avançado | Ilimitado | ✅ Ilimitado | ✅ | R$ 199,90/mês |
+## Required Environment Variables
 
-### Status de Conta
-- **active**: Conta funcionando normalmente
-- **suspended**: Conta suspensa (cancelamento/não pagamento/admin)
-- **expired**: Plano expirou sem renovação
+### Backend (.env)
+```
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=xxx
+SUPABASE_JWT_SECRET=xxx
+WAHA_DEFAULT_URL=https://waha.xxx.com
+WAHA_MASTER_KEY=xxx
+BACKEND_WEBHOOK_URL=https://api.xxx.com  # IMPORTANT for WAHA webhook
+N8N_WEBHOOK_URL=https://n8n.xxx.com/webhook/xxx  # For AI agent
+CORS_ORIGINS=https://app.xxx.com
+```
 
----
+## Prioritized Backlog
 
-## ✅ O que foi Implementado (06/02/2026)
+### P0 - Critical
+- [ ] User needs to configure `BACKEND_WEBHOOK_URL` in Coolify production
+- [ ] User needs to configure `N8N_WEBHOOK_URL` for AI agent flow
+- [ ] User needs to adapt n8n workflow per `GUIA_N8N_ADAPTACAO.md`
 
-### Controle de Acesso por Plano (ATUALIZADO)
-- [x] Plano Demo REMOVIDO completamente
-- [x] Hook `usePlanPermissions` - verifica permissões e status da conta
-- [x] Componente `PlanBlockedOverlay` - tela de bloqueio para conta suspensa/expirada
-- [x] Verificação de expiração de plano no backend (HTTP 402)
-- [x] Sidebar com ícones de cadeado para features bloqueadas
-- [x] Alerta de expiração próxima no Dashboard
+### P1 - Important
+- [ ] Add `language` column to `agent_configs` table in Supabase (error in logs)
+- [ ] Fix Dockerfile port inconsistencies (80 vs 3000)
+- [ ] Replace fragile startup script with `supervisor`
+- [ ] Remove duplicate `/app/temp_repo` directory
 
-### Painel Admin - Gerenciamento Manual
-- [x] Endpoint `POST /api/admin/users/{id}/suspend` - suspende conta
-- [x] Endpoint `POST /api/admin/users/{id}/activate` - ativa com plano escolhido
-- [x] Endpoint `GET /api/admin/users` - lista todos usuários com status
-- [x] Interface no Admin com botões Suspender/Ativar
-- [x] Coluna de Status (Ativo/Suspenso/Expirado) na tabela
+### P2 - Nice to Have
+- [ ] Replace deprecated `datetime.utcnow()` with `datetime.now(timezone.utc)`
+- [ ] Standardize environment variable names across docker-compose files
+- [ ] Consolidate Docker setup (root Dockerfile vs subdirectory Dockerfiles)
 
-### Página Agente IA
-- [x] Página criada (`/agente-ia`)
-- [x] Configurações de personalidade e prompt
-- [x] Status: Beta (integração n8n pendente)
-
-### Sidebar Reorganizada
-- [x] "Buscar Leads" movido para seção "Ferramentas"
-- [x] Seções: Aplicação (Dashboard, Histórico) | Ferramentas (Buscar Leads, Disparador, Agente IA) | Conta
-
-### Configurações de Campanha MELHORADAS
-- [x] Seleção de Fuso Horário por campanha (6 fusos brasileiros)
-- [x] Presets de horário: Comercial, Manhã, Tarde, Dia Inteiro
-- [x] Visualização gráfica da janela de disparo (barra visual 0-24h)
-- [x] Estimativa de capacidade (msg/hora, msg/dia)
-- [x] Badges de risco no limite diário (Seguro → Alto Risco)
-- [x] Tooltips explicativos nos dias da semana
-- [x] Backend atualizado para usar timezone da campanha
-
-### Configurações Simplificadas
-- [x] Removida configuração de timezone/horários globais (agora é por campanha)
-- [x] Página de Configurações mostra mensagem informativa sobre horários por campanha
-- [x] Cada campanha define seu próprio fuso horário e horários de envio
-
-### Criar Campanha Direto dos Leads (NOVO)
-- [x] Botão "Criar Campanha" na página de busca de leads
-- [x] Dialog com configurações rápidas (timezone, horário, dias, limite)
-- [x] Endpoint `POST /api/campaigns/from-leads` - cria campanha + contatos em uma chamada
-- [x] Inserção em batch de contatos (500 por vez) para não sobrecarregar Supabase
-- [x] Filtro automático: só leads com WhatsApp são adicionados
-- [x] Estimativa de tempo de conclusão da campanha
-
-### Correção de Dias da Semana
-- [x] Corrigida conversão JS (0=Dom) → Python (0=Seg) no campaign_worker
-- [x] Agora os horários funcionam corretamente com qualquer fuso horário
-
-### Sistema de Pagamentos (Kiwify)
-- [x] Webhook `order.paid` - upgrade automático
-- [x] Webhook `order.refunded` - SUSPENDE conta
-- [x] Webhook `subscription.canceled` - SUSPENDE conta
-
----
-
-## 📊 Sobre Company vs User
-
-**Status atual:** Cada usuário tem sua própria Company (relação 1:1)
-
-**Motivo original:** Permitir times com múltiplos usuários por empresa
-
-**Recomendação:** Manter por enquanto - simplificar envolveria migração de dados no Supabase
-
----
-
-## 📝 Backlog Priorizado
-
-### P0 (Crítico)
-- [ ] Integração n8n para Agente IA
-- [ ] Webhook de renovação mensal do Kiwify
-
-### P1 (Importante)  
-- [ ] Página de preços/planos pública
-- [ ] Histórico de pagamentos no perfil
-- [ ] Notificação por email antes de expirar
-
-### P2 (Melhoria)
-- [ ] Simplificar relação Company/User
-- [ ] Job automático de expiração de planos
-- [ ] Relatórios exportáveis
-
----
-
-## 🔗 Links de Pagamento (Kiwify)
-- Básico: https://pay.kiwify.com.br/FzhyShi
-- Intermediário: https://pay.kiwify.com.br/YlIDqCN
-- Avançado: https://pay.kiwify.com.br/TnUQl3f
-
----
-
-## 🧪 Como Testar
-
-### Testar Suspensão via Admin:
-1. Acesse `/admin` (requer role super_admin)
-2. Encontre o usuário na lista
-3. Clique em "Suspender" → Confirme
-4. A conta do usuário ficará com status "Suspenso"
-5. Usuário verá tela de bloqueio ao acessar qualquer página
-
-### Testar Ativação via Admin:
-1. Encontre usuário suspenso
-2. Clique em "Ativar" → Escolha plano (Básico/Intermediário/Avançado)
-3. Conta ativada por 30 dias com o plano escolhido
+## Known Issues
+1. `agent_configs` table missing `language` column - causes save error
+2. Duplicate `src/` directories in repository
+3. Inconsistent Docker configurations between files
