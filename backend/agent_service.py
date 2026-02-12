@@ -9,22 +9,25 @@ async def process_waha_message_for_n8n(payload: dict):
     """
     Processa webhook do WAHA, valida se a empresa tem o agente ativo
     e encaminha para o n8n gerar a resposta.
+    
+    O payload é enviado no formato compatível com WAHA Trigger do n8n,
+    facilitando a adaptação de workflows existentes.
     """
     try:
         # 1. Obter URL do Webhook do ambiente
         n8n_url = os.getenv("N8N_WEBHOOK_URL")
         if not n8n_url:
-            logger.error("❌ N8N_WEBHOOK_URL não configurada no .env")
+            logger.warning("⚠️ N8N_WEBHOOK_URL não configurada - Agente IA desabilitado")
             return
 
         # 2. Extrair dados básicos
         event = payload.get("event")
-        if event != "message": return
+        if event != "message": 
+            return
         
         msg_payload = payload.get("payload", {})
         
         # Ignorar mensagens enviadas por mim ou grupos
-        # O filtro @g.us remove grupos
         if msg_payload.get("fromMe") or "@g.us" in msg_payload.get("from", ""):
             return
         
@@ -32,7 +35,8 @@ async def process_waha_message_for_n8n(payload: dict):
         sender = msg_payload.get("from")
         body = msg_payload.get("body")
         
-        if not body or not sender: return
+        if not body or not sender: 
+            return
 
         db = get_supabase_service()
 
@@ -58,7 +62,6 @@ async def process_waha_message_for_n8n(payload: dict):
                 company_id = waha_res.data["company_id"]
 
         if not company_id:
-            #logger.warning(f"⚠️ Agente: Empresa não encontrada para sessão {session_name}")
             return 
 
         # 4. Buscar Configuração do Agente
@@ -68,29 +71,112 @@ async def process_waha_message_for_n8n(payload: dict):
         if not agent_config or not agent_config.get("enabled"):
             return 
 
-        # 5. Enviar payload para o n8n
+        # 5. Buscar dados da empresa e WAHA config
+        company_res = db.client.table("companies")\
+            .select("name")\
+            .eq("id", company_id)\
+            .maybe_single().execute()
+        company_name = company_res.data.get("name", "") if company_res.data else ""
+        
+        # Buscar configurações do WAHA (URL e API Key)
+        waha_url = os.getenv("WAHA_DEFAULT_URL", "")
+        waha_api_key = os.getenv("WAHA_MASTER_KEY", "")
+        
+        # Tentar buscar config específica da empresa
+        company_waha_res = db.client.table("company_settings")\
+            .select("waha_api_url, waha_api_key")\
+            .eq("company_id", company_id)\
+            .maybe_single().execute()
+        
+        if company_waha_res.data:
+            if company_waha_res.data.get("waha_api_url"):
+                waha_url = company_waha_res.data["waha_api_url"]
+            if company_waha_res.data.get("waha_api_key"):
+                waha_api_key = company_waha_res.data["waha_api_key"]
+
+        # 6. Extrair telefone normalizado
+        telefone_normalizado = sender.replace("@c.us", "").replace("@s.whatsapp.net", "")
+        
+        # 7. Montar payload compatível com WAHA Trigger do n8n
+        # Este formato permite reutilizar workflows existentes com mínimas alterações
         n8n_payload = {
-            "message": body,
+            # === Dados no formato WAHA Trigger ===
+            "payload": msg_payload,  # Payload original do WAHA
+            
+            # === Dados extraídos e normalizados ===
+            "telefone_normalizado": telefone_normalizado,
+            "texto_cliente": body,
+            
+            # === Variáveis para o workflow ===
+            "variaveis": {
+                "server_url": waha_url,
+                "instancia": session_name,
+                "api_key": waha_api_key,
+                "phone": telefone_normalizado,
+                "mensagem": body,
+            },
+            
+            # === Contexto da empresa (Client4You) ===
+            "client4you": {
+                "company_id": company_id,
+                "company_name": company_name,
+                "session_name": session_name,
+                "agent_config": {
+                    "name": agent_config.get("name", "Assistente"),
+                    "personality": agent_config.get("personality", ""),
+                    "system_prompt": agent_config.get("system_prompt", ""),
+                    "response_delay": agent_config.get("response_delay", 3),
+                    "model": agent_config.get("model", "gpt-4.1-mini"),
+                    "temperature": agent_config.get("temperature", 0.7),
+                }
+            },
+            
+            # === Metadados ===
+            "event": "message",
+            "session": session_name,
             "sender": sender,
-            "session_name": session_name,
-            "company_id": company_id,
             "contact_name": msg_payload.get("_data", {}).get("notifyName", "Cliente"),
-            "agent_config": {
-                "name": agent_config.get("name", "Assistente"),
-                "personality": agent_config.get("personality", ""),
-                "system_prompt": agent_config.get("system_prompt", ""),
-                "response_delay": agent_config.get("response_delay", 3),
-                "full_config": agent_config 
-            }
+            "timestamp": msg_payload.get("timestamp"),
+            
+            # === Tipo de mensagem ===
+            "message_type": "audio" if msg_payload.get("hasMedia") and msg_payload.get("type") == "ptt" else "text",
+            "has_media": msg_payload.get("hasMedia", False),
+            "media_url": msg_payload.get("media", {}).get("url") if msg_payload.get("hasMedia") else None,
         }
 
         # Disparo assíncrono (Fire & Forget)
         async with httpx.AsyncClient() as client:
             try:
-                await client.post(n8n_url, json=n8n_payload, timeout=5.0)
-                logger.info(f"🤖 Agente IA acionado para: {sender} (via n8n)")
+                response = await client.post(n8n_url, json=n8n_payload, timeout=10.0)
+                if response.status_code in [200, 201, 204]:
+                    logger.info(f"🤖 Agente IA acionado para: {sender} (n8n)")
+                else:
+                    logger.warning(f"⚠️ n8n retornou status {response.status_code}")
+            except httpx.TimeoutException:
+                logger.warning(f"⚠️ Timeout ao chamar n8n para {sender}")
             except Exception as e:
                 logger.error(f"❌ Erro ao chamar n8n: {e}")
 
     except Exception as e:
         logger.error(f"❌ Erro no processamento do agente: {e}")
+
+
+async def get_agent_status(company_id: str) -> dict:
+    """
+    Retorna o status atual do agente IA para uma empresa.
+    """
+    try:
+        db = get_supabase_service()
+        config = await db.get_agent_config(company_id)
+        
+        n8n_configured = bool(os.getenv("N8N_WEBHOOK_URL"))
+        
+        return {
+            "enabled": config.get("enabled", False) if config else False,
+            "n8n_configured": n8n_configured,
+            "config": config,
+            "status": "active" if (config and config.get("enabled") and n8n_configured) else "inactive"
+        }
+    except Exception as e:
+        logger.error(f"Erro ao buscar status do agente: {e}")
+        return {"enabled": False, "n8n_configured": False, "status": "error"}
