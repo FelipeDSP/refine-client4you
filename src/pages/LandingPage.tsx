@@ -155,7 +155,7 @@ export default function LandingPage() {
             <motion.h1 variants={fadeUp} custom={1} className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-white leading-[0.9]">
               Do Lead à Conversão
               <br />
-              <span className="bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent">
+              <span className="text-primary">
                 em Minutos
               </span>
             </motion.h1>
@@ -459,7 +459,7 @@ export default function LandingPage() {
               <div className="relative z-10 p-12 md:p-20 text-center space-y-8">
                 <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
                   Pronto para captar<br />
-                  <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">mais clientes?</span>
+                  <span className="text-primary">mais clientes?</span>
                 </h2>
                 <p className="text-lg text-white/60 max-w-xl mx-auto">
                   Junte-se a centenas de profissionais que já estão escalando suas vendas com Client4you
