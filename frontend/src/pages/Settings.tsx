@@ -105,6 +105,11 @@ export default function Settings() {
   const { setPageTitle } = usePageTitle();
   const api = createAuthenticatedApi();
   
+  // Ler tab do query param
+  const searchParams = new URLSearchParams(window.location.search);
+  const initialTab = searchParams.get('tab') || 'whatsapp';
+  const [activeTab, setActiveTab] = useState(initialTab);
+  
   useEffect(() => {
     setPageTitle("Configurações", SettingsIcon);
   }, [setPageTitle]);
