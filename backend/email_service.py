@@ -217,7 +217,7 @@ class EmailService:
                     </div>
                     
                     <div style="text-align: center;">
-                        <a href="https://leadpro-check.preview.emergentagent.com/login" class="button">
+                        <a href="https://deploy-review-5.preview.emergentagent.com/login" class="button">
                             Acessar Plataforma
                         </a>
                     </div>
@@ -256,7 +256,7 @@ class EmailService:
         Plano: {plan_name}
         Pedido: {order_id}
         
-        Acesse: https://leadpro-check.preview.emergentagent.com/login
+        Acesse: https://deploy-review-5.preview.emergentagent.com/login
         
         Atenciosamente,
         Equipe Client4You
@@ -420,7 +420,7 @@ class EmailService:
                     <p>Você pode visualizar os detalhes completos e logs da campanha na plataforma.</p>
                     
                     <div style="text-align: center;">
-                        <a href="https://leadpro-check.preview.emergentagent.com/disparador" class="button">
+                        <a href="https://deploy-review-5.preview.emergentagent.com/disparador" class="button">
                             Ver Detalhes da Campanha
                         </a>
                     </div>
@@ -463,7 +463,7 @@ class EmailService:
         - Erros: {total_errors}
         - Taxa de sucesso: {success_rate:.1f}%
         
-        Acesse: https://leadpro-check.preview.emergentagent.com/disparador
+        Acesse: https://deploy-review-5.preview.emergentagent.com/disparador
         
         Atenciosamente,
         Equipe Client4You
