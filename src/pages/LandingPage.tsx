@@ -87,9 +87,9 @@ export default function LandingPage() {
         className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-xl"
       >
         <div className="container relative flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/client4you-icon.png" alt="Client4you" className="h-8 w-8 rounded" />
-            <span className="text-xl font-bold">Client4you</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <img src="/client4you-icon.png" alt="Client4you" className="h-8 w-8 rounded flex-shrink-0" />
+            <span className="text-xl font-bold hidden sm:inline">Client4you</span>
           </div>
           
           <nav className="hidden md:flex gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -99,14 +99,14 @@ export default function LandingPage() {
             <a href="#faq" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">FAQ</a>
           </nav>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link to="/login">
               <Button variant="ghost" size="sm">Entrar</Button>
             </Link>
             <a href="#pricing">
-              <Button size="sm" className="gap-2 shadow-lg shadow-primary/30">
+              <Button size="sm" className="gap-1.5 sm:gap-2 text-xs sm:text-sm shadow-lg shadow-primary/30">
                 Começar Agora
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             </a>
           </div>
