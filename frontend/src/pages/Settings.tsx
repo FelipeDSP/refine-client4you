@@ -27,7 +27,9 @@ import {
   Ban,
   Lightbulb,
   ShieldAlert,
-  FileWarning
+  FileWarning,
+  Brain,
+  Key
 } from "lucide-react";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { useToast } from "@/hooks/use-toast";
