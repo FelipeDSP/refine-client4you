@@ -41,6 +41,9 @@ export default function SearchLeads() {
   const [filters, setFilters] = useState<LeadFilterState>(defaultFilters);
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
   
+  // NOVO: Guarda os objetos completos dos leads para não perdê-los ao mudar de busca
+  const [selectedLeadObjects, setSelectedLeadObjects] = useState<Lead[]>([]);
+  
   const { quota, checkQuota, incrementQuota } = useQuotas();
   const [showQuotaModal, setShowQuotaModal] = useState(false);
   
@@ -186,6 +189,32 @@ export default function SearchLeads() {
 
   const filteredLeads = filterLeads(currentResults, filters);
 
+  // NOVO: Função para gerenciar a seleção e guardar os objetos completos
+  const handleSelectionChange = (newSelectedIds: string[]) => {
+    setSelectedLeads(newSelectedIds);
+    
+    // Atualiza a lista de objetos selecionados
+    setSelectedLeadObjects(prevObjects => {
+      const newObjects = [...prevObjects];
+      
+      // Remove os que foram desmarcados
+      const filteredObjects = newObjects.filter(obj => newSelectedIds.includes(obj.id));
+      
+      // Adiciona os novos que foram marcados (buscando da página atual/cache)
+      newSelectedIds.forEach(id => {
+        if (!filteredObjects.some(obj => obj.id === id)) {
+          // Procura o lead nos resultados atuais para adicionar
+          const leadToAdd = currentResults.find(l => l.id === id);
+          if (leadToAdd) {
+            filteredObjects.push(leadToAdd);
+          }
+        }
+      });
+      
+      return filteredObjects;
+    });
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -196,14 +225,15 @@ export default function SearchLeads() {
           </p>
         </div>
         
-        {currentResults.length > 0 && (
+        {/* MODIFICADO: Passa todos os objetos selecionados ou os filtrados da tela */}
+        {(currentResults.length > 0 || selectedLeadObjects.length > 0) && (
           <div className="flex items-center gap-2">
             <ExportButton 
-              leads={filteredLeads} 
+              leads={selectedLeadObjects.length > 0 ? selectedLeadObjects : filteredLeads} 
               selectedLeads={selectedLeads} 
             />
             <CreateCampaignFromLeads
-              leads={filteredLeads}
+              leads={selectedLeadObjects.length > 0 ? selectedLeadObjects : filteredLeads}
               selectedLeads={selectedLeads}
             />
           </div>
@@ -285,11 +315,12 @@ export default function SearchLeads() {
           </div>
           
           {/* TABELA */}
+          {/* MODIFICADO: onSelectionChange aponta para a nova função handleSelectionChange */}
           <LeadTable
             leads={filteredLeads}
             selectedLeads={selectedLeads}
-            onSelectionChange={setSelectedLeads}
-            onDelete={handleLocalDelete} // Usa a nova função de deletar local
+            onSelectionChange={handleSelectionChange}
+            onDelete={handleLocalDelete}
             isLoading={isProcessing && currentResults.length === 0}
           />
           
