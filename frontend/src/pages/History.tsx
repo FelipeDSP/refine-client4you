@@ -25,6 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { LeadTable } from "@/components/LeadTable";
+import { CreateCampaignFromLeads } from "@/components/CreateCampaignFromLeads"; // NOVO: Componente do Criador de Campanhas
 import { Search, MapPin, Calendar, Hash, Trash2, Eye, Download, History as HistoryIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -67,7 +68,6 @@ export default function History() {
     });
   };
 
-  // Mesma lógica de separação de endereço
   const splitAddress = (fullAddress: string) => {
     if (!fullAddress) return { location: "", cityState: "" };
     const match = fullAddress.match(/, ([^,]+?) - ([A-Z]{2})/);
@@ -102,9 +102,9 @@ export default function History() {
         "Categoria": lead.category,
         "Telefone": lead.phone,
         "WhatsApp": lead.hasWhatsApp ? "Sim" : "Não",
-        "Endereço (Local)": addressInfo.location,   // <--- Separado
-        "Cidade/Estado": addressInfo.cityState,     // <--- Separado
-        "Endereço Completo": lead.address,          // Mantido
+        "Endereço (Local)": addressInfo.location,   
+        "Cidade/Estado": addressInfo.cityState,     
+        "Endereço Completo": lead.address,          
         "Avaliação": lead.rating,
         "Website": lead.website || "",
         "Data": new Date(lead.extractedAt).toLocaleDateString("pt-BR"),
@@ -141,7 +141,7 @@ export default function History() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-gray-800">Histórico</h2>
           <p className="text-muted-foreground mt-1">Veja e gerencie suas buscas anteriores.</p>
@@ -181,76 +181,86 @@ export default function History() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {searchHistory.map((search) => (
-            <Card key={search.id} className="bg-white shadow-sm border-none hover:shadow-md transition-shadow">
+            <Card key={search.id} className="bg-white shadow-sm border-none hover:shadow-md transition-shadow flex flex-col">
+              
+              {/* ITEM 2 CORRIGIDO: Layout arrumado com truncate e shrink-0 para não quebrar a Badge */}
               <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2 text-gray-800">
-                    <Search className="h-4 w-4 text-primary" />
-                    {search.query}
+                <div className="flex flex-row items-start justify-between gap-3">
+                  <CardTitle className="text-lg flex items-center gap-2 text-gray-800 min-w-0" title={search.query}>
+                    <Search className="h-4 w-4 text-primary shrink-0" />
+                    <span className="truncate">{search.query}</span>
                   </CardTitle>
-                  <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-600 shrink-0 whitespace-nowrap mt-0.5">
                     <Hash className="h-3 w-3 mr-1" />
-                    {search.resultsCount}
+                    {search.resultsCount?.toLocaleString() || 0}
                   </Badge>
                 </div>
-                <CardDescription className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {search.location}
+                <CardDescription className="flex items-center gap-1 mt-1" title={search.location}>
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{search.location}</span>
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
+              
+              <CardContent className="flex flex-col flex-1 gap-3">
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <Calendar className="h-3 w-3 mr-1" />
+                  <Calendar className="h-3 w-3 mr-1 shrink-0" />
                   {formatDistanceToNow(new Date(search.searchedAt), {
                     addSuffix: true,
                     locale: ptBR,
                   })}
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => handleViewSearch(search)}
-                  >
-                    <Eye className="mr-2 h-4 w-4" />
-                    Ver Leads
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleDownloadLeads(search)}
-                    title="Baixar Excel Completo"
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Remover pesquisa?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Remover "{search.query}"?
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeleteSearch(search.id)}>
-                          Sim, remover
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                {/* O divisor empurra as ações para o fim do card */}
+                <div className="mt-auto pt-4 border-t border-slate-100">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 min-w-[100px]"
+                      onClick={() => handleViewSearch(search)}
+                    >
+                      <Eye className="mr-2 h-4 w-4" /> Ver Leads
+                    </Button>
+                    
+                    {/* ITEM 3: Botão de criar campanha direto no card! */}
+                    <div className="flex-none">
+                      <CreateCampaignFromLeads leads={getLeadsBySearchId(search.id)} />
+                    </div>
+
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => handleDownloadLeads(search)}
+                      title="Baixar Excel"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive hover:bg-destructive/10">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remover pesquisa?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Remover "{search.query}"?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteSearch(search.id)}>
+                            Sim, remover
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -258,43 +268,55 @@ export default function History() {
         </div>
       )}
 
+      {/* Modal de Detalhes da Pesquisa */}
       <Dialog open={!!selectedSearch} onOpenChange={(open) => !open && setSelectedSearch(null)}>
         <DialogContent className="max-w-5xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden bg-white">
-          <DialogHeader className="p-6 pb-2 flex-none">
-            <div className="flex items-center justify-between pr-8">
-              <div>
-                <DialogTitle className="flex items-center gap-2 text-xl">
-                  <Search className="h-5 w-5 text-primary" />
-                  Resultados: {selectedSearch?.query}
+          <DialogHeader className="p-6 pb-4 flex-none border-b">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pr-8">
+              
+              <div className="min-w-0">
+                <DialogTitle className="flex items-center gap-2 text-xl truncate" title={selectedSearch?.query}>
+                  <Search className="h-5 w-5 text-primary shrink-0" />
+                  <span className="truncate">Resultados: {selectedSearch?.query}</span>
                 </DialogTitle>
-                <DialogDescription className="flex items-center gap-3 mt-1.5">
-                  <span className="flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded text-xs">
-                    <MapPin className="h-3 w-3" />
-                    {selectedSearch?.location}
+                <DialogDescription className="flex items-center flex-wrap gap-3 mt-1.5">
+                  <span className="flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded text-xs truncate max-w-[200px]" title={selectedSearch?.location}>
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{selectedSearch?.location}</span>
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    {searchLeads.length} leads encontrados
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {searchLeads.length?.toLocaleString()} leads encontrados
                   </span>
                 </DialogDescription>
               </div>
               
               {searchLeads.length > 0 && selectedSearch && (
-                <Button 
-                  size="sm" 
-                  variant={selectedLeadIds.length > 0 ? "default" : "outline"}
-                  onClick={handleModalDownload}
-                  className="gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  {selectedLeadIds.length > 0 
-                    ? `Baixar Selecionados (${selectedLeadIds.length})` 
-                    : "Baixar Todos"}
-                </Button>
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={handleModalDownload}
+                    className="gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span className="hidden sm:inline">
+                      {selectedLeadIds.length > 0 ? `Baixar Selecionados (${selectedLeadIds.length})` : "Baixar Todos"}
+                    </span>
+                    <span className="sm:hidden">Baixar</span>
+                  </Button>
+                  
+                  {/* ITEM 3: Botão de criar campanha no modal */}
+                  <CreateCampaignFromLeads
+                    leads={searchLeads}
+                    selectedLeads={selectedLeadIds}
+                  />
+                </div>
               )}
+              
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-hidden p-2 bg-gray-50/30">
+          <div className="flex-1 overflow-hidden p-4 bg-slate-50/50">
             <div className="h-full border rounded-lg bg-white overflow-y-auto">
               <LeadTable 
                 leads={searchLeads} 
