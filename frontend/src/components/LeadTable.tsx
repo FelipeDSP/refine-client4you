@@ -47,6 +47,7 @@ export function LeadTable({
   isLoading 
 }: LeadTableProps) {
   
+  // LOGICA CORRIGIDA AQUI 👇
   const toggleSelectAll = () => {
     if (!onSelectionChange) return;
     
@@ -107,6 +108,7 @@ export function LeadTable({
         <TableHeader className={BRAND_BLUE}>
           <TableRow className="hover:bg-[#054173]/90 border-none">
             <TableHead className="w-[40px] pl-4">
+              {/* CHECKBOX GERAL CORRIGIDO AQUI 👇 */}
               <Checkbox 
                 checked={leads.length > 0 && leads.every(lead => selectedLeads.includes(lead.id))}
                 onCheckedChange={toggleSelectAll}
