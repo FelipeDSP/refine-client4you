@@ -49,10 +49,18 @@ export function LeadTable({
   
   const toggleSelectAll = () => {
     if (!onSelectionChange) return;
-    if (selectedLeads.length === leads.length) {
-      onSelectionChange([]);
+    
+    // Verifica se TODOS os leads da página ATUAL já estão selecionados
+    const allCurrentSelected = leads.every(lead => selectedLeads.includes(lead.id));
+
+    if (allCurrentSelected) {
+      // Se todos da página atual estão selecionados, removemos apenas eles da seleção geral
+      const currentIds = leads.map(l => l.id);
+      onSelectionChange(selectedLeads.filter(id => !currentIds.includes(id)));
     } else {
-      onSelectionChange(leads.map((l) => l.id));
+      // Se não, adicionamos os da página atual que ainda não estão na seleção
+      const newSelections = leads.filter(l => !selectedLeads.includes(l.id)).map(l => l.id);
+      onSelectionChange([...selectedLeads, ...newSelections]);
     }
   };
 
@@ -100,7 +108,7 @@ export function LeadTable({
           <TableRow className="hover:bg-[#054173]/90 border-none">
             <TableHead className="w-[40px] pl-4">
               <Checkbox 
-                checked={leads.length > 0 && selectedLeads.length === leads.length}
+                checked={leads.length > 0 && leads.every(lead => selectedLeads.includes(lead.id))}
                 onCheckedChange={toggleSelectAll}
                 className="border-white/50 data-[state=checked]:bg-[#F59600] data-[state=checked]:border-[#F59600] data-[state=checked]:text-white"
               />
